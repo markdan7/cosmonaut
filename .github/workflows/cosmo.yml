@@ -1,12 +1,13 @@
 name: cosmonaut-macos
 on: workflow_dispatch
+
 jobs:
   run-cosmo:
-    runs-on: macos-13     # <-- ОБОВʼЯЗКОВО Intel runner
+    runs-on: macos-13   # Intel runner (обов'язково)
     steps:
       - uses: actions/checkout@v4
       - name: Run and print macOS fragment
         shell: bash
         run: |
           chmod +x ./cosmonaut.com
-          ./cosmonaut.com | sed -n '/Like on macOS!/{n;p;q}'
+          ./cosmonaut.com | awk '/Like on macOS!/{getline; print; exit}'
