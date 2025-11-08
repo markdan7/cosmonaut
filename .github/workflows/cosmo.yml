@@ -5,7 +5,22 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Show macOS fragment
+
+      - name: Prep
+        shell: bash
         run: |
+          set -x
+          uname -a
+          ls -la
           chmod +x ./cosmonaut.com
-          ./cosmonaut.com | sed -n '/Like on macOS!/{n;p;q}'
+          # переконуємось, що є компілятор для асиміляції
+          xcode-select -p || true
+          which clang || true
+          clang --version || true
+
+      - name: Assimilate APE loader (ok if it "fails")
+        shell: bash
+        run: |
+          set -x
+          # Спроба зібрати/розпакувати лоадер
+          ./cosmonaut.com --assimilate || true
