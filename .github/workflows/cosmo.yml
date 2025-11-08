@@ -1,19 +1,16 @@
-name: cosmonaut-macos
-on:
-  workflow_dispatch:
+    - name: Run on macOS (to be sure)
+      run: |
+        ./cosmonaut.com --assimilate || true
+        ./cosmonaut.com | tee out.txt
 
-jobs:
-  run-cosmo:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: macOS run (assimilate + run)
-        shell: bash
-        run: |
-          set -euo pipefail
-          chmod +x ./cosmonaut.com
-          ./cosmonaut.com --assimilate
-          ./cosmonaut.com | tee out.txt
-          echo "---- macOS FRAGMENT ----"
-          awk '/Like on macOS!/{getline; print; exit}' out.txt
+    - name: Dump __cstring and grep around macOS marker
+      run: |
+        # Витягнемо всі C-рядки з Mach-O секції
+        otool -v -s __TEXT __cstring ./cosmonaut.com > cstrings.txt
+        # Показати 40 рядків після маркера "Like on macOS!"
+        awk '/Like on macOS!/{flag=1; c=0; next} flag && c++<40 {print}' cstrings.txt | sed -n '1,120p'
+        echo '---- NEAR FLAG GUESS ----'
+        # Подивимось сусідні рядки біля вже відомих шматків, щоб виявити продовження
+        grep -n -E '4_7ru3_|c05m0p0l174n_c0nn353ur_' -n cstrings.txt -n | while IFS=: read -r L _ ; do sed -n "$((L-5)),$((L+10))p" cstrings.txt ; echo '---'; done
+        echo '---- RAW STRINGS SEARCH ----'
+        strings -a ./cosmonaut.com | grep -n -E 'bctf\{|4_7ru3_|c05m0p0l174n_c0nn353ur_|everywhere|once|programs|portable|portab|p0rt4b1' -n | head -n 80
