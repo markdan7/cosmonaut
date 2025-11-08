@@ -1,9 +1,19 @@
-- name: macOS run (assimilate + run)
-  shell: bash
-  run: |
-    set -euo pipefail
-    chmod +x ./cosmonaut.com
-    ./cosmonaut.com --assimilate
-    ./cosmonaut.com | tee out.txt
-    echo "---- macOS FRAGMENT ----"
-    awk '/Like on macOS!/{getline; print; exit}' out.txt
+name: cosmonaut-macos
+on:
+  workflow_dispatch:
+
+jobs:
+  run-cosmo:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: macOS run (assimilate + run)
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./cosmonaut.com
+          ./cosmonaut.com --assimilate
+          ./cosmonaut.com | tee out.txt
+          echo "---- macOS FRAGMENT ----"
+          awk '/Like on macOS!/{getline; print; exit}' out.txt
