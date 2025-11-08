@@ -2,7 +2,7 @@ name: cosmonaut-macos
 on: workflow_dispatch
 jobs:
   run-cosmo:
-    runs-on: macos-13   # ⬅️ ВАЖЛИВО: Intel runner
+    runs-on: macos-13     # <-- ОБОВʼЯЗКОВО Intel runner
     steps:
       - uses: actions/checkout@v4
       - name: Run and print macOS fragment
