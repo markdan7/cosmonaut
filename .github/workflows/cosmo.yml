@@ -1,50 +1,9 @@
-name: cosmonaut-macos
-on: workflow_dispatch
-
-jobs:
-  run-cosmo:
-    runs-on: macos-13   # Intel runner
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Prep
-        shell: bash
-        run: |
-          set -x
-          chmod +x ./cosmonaut.com
-          file ./cosmonaut.com || true
-
-      - name: Assimilate APE loader
-        shell: bash
-        run: |
-          set -x
-          ./cosmonaut.com --assimilate || true
-          ls -la "$HOME"/.ape-* 2>/dev/null || true
-
-      - name: Run via loader (fallback to direct) and save output
-        shell: bash
-        run: |
-          set -euo pipefail
-          FOUND=""
-          for L in "$HOME"/.ape-*; do
-            if [[ -x "$L" ]]; then
-              echo "Using loader: $L"
-              "$L" ./cosmonaut.com | tee out.txt
-              FOUND=1
-              break
-            fi
-          done
-          if [[ -z "${FOUND:-}" ]]; then
-            echo "No loader found, running directly"
-            ./cosmonaut.com | tee out.txt
-          fi
-
-      - name: Print macOS fragment
-        shell: bash
-        run: |
-          echo "---- macOS FRAGMENT ----"
-          awk '/Like on macOS!/{getline; print; exit}' out.txt || true
-          echo "---- Context ----"
-          grep -nA1 'Like on macOS!' out.txt || true
-          echo "---- Full (head) ----"
-          sed -n '1,80p' out.txt || true
+- name: macOS run (assimilate + run)
+  shell: bash
+  run: |
+    set -euo pipefail
+    chmod +x ./cosmonaut.com
+    ./cosmonaut.com --assimilate
+    ./cosmonaut.com | tee out.txt
+    echo "---- macOS FRAGMENT ----"
+    awk '/Like on macOS!/{getline; print; exit}' out.txt
