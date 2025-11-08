@@ -3,7 +3,7 @@ on: workflow_dispatch
 
 jobs:
   run-cosmo:
-    runs-on: macos-13        # обов'язково Intel runner
+    runs-on: macos-13   # Intel runner
     steps:
       - uses: actions/checkout@v4
 
@@ -11,27 +11,31 @@ jobs:
         shell: bash
         run: |
           set -x
-          uname -a
-          sysctl -n machdep.cpu.brand_string || true
-          file ./cosmonaut.com || true
           chmod +x ./cosmonaut.com
+          file ./cosmonaut.com || true
 
-      - name: Assimilate APE loader (ok if it "fails")
+      - name: Assimilate APE loader
         shell: bash
         run: |
           set -x
           ./cosmonaut.com --assimilate || true
-          ls -la "$HOME" | sed -n '1,200p' || true
-          ls -la "$HOME"/.ape* 2>/dev/null || true
+          ls -la "$HOME"/.ape-* 2>/dev/null || true
 
-      - name: Run binary (via loader if present) and save output
+      - name: Run via loader (fallback to direct) and save output
         shell: bash
         run: |
           set -euo pipefail
-          LOADER=$(compgen -G "$HOME/.ape-* " | head -n1 || true)
-          if [[ -n "${LOADER:-}" && -x "$LOADER" ]]; then
-            "$LOADER" ./cosmonaut.com | tee out.txt
-          else
+          FOUND=""
+          for L in "$HOME"/.ape-*; do
+            if [[ -x "$L" ]]; then
+              echo "Using loader: $L"
+              "$L" ./cosmonaut.com | tee out.txt
+              FOUND=1
+              break
+            fi
+          done
+          if [[ -z "${FOUND:-}" ]]; then
+            echo "No loader found, running directly"
             ./cosmonaut.com | tee out.txt
           fi
 
@@ -39,8 +43,8 @@ jobs:
         shell: bash
         run: |
           echo "---- macOS FRAGMENT ----"
-          awk '/Like on macOS!/{getline; print; found=1; exit} END{if(!found) exit 1}' out.txt || true
-          echo "---- Context (for debug) ----"
+          awk '/Like on macOS!/{getline; print; exit}' out.txt || true
+          echo "---- Context ----"
           grep -nA1 'Like on macOS!' out.txt || true
-          echo "---- Full (tail) ----"
-          tail -n +1 out.txt | sed -n '1,120p' || true
+          echo "---- Full (head) ----"
+          sed -n '1,80p' out.txt || true
