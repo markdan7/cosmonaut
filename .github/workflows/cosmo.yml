@@ -1,5 +1,6 @@
 name: cosmonaut-macos
 on: workflow_dispatch
+
 jobs:
   run-cosmo:
     runs-on: macos-latest
@@ -10,17 +11,34 @@ jobs:
         shell: bash
         run: |
           set -x
-          uname -a
           ls -la
           chmod +x ./cosmonaut.com
-          # переконуємось, що є компілятор для асиміляції
           xcode-select -p || true
-          which clang || true
           clang --version || true
 
       - name: Assimilate APE loader (ok if it "fails")
         shell: bash
         run: |
           set -x
-          # Спроба зібрати/розпакувати лоадер
           ./cosmonaut.com --assimilate || true
+          ls -la ~ | sed -n '1,200p' || true
+          ls -la ~/.ape* 2>/dev/null || true
+
+      - name: Run and capture output (prints macOS fragment)
+        shell: bash
+        run: |
+          set -o pipefail
+          LOADER=$(compgen -G "$HOME/.ape-* " | head -n1 || true)
+          if [[ -x "$LOADER" ]]; then
+            "$LOADER" ./cosmonaut.com | tee out.txt || true
+          else
+            ./cosmonaut.com | tee out.txt || true
+          fi
+          echo "---- macOS FRAGMENT ----"
+          awk '/Like on macOS!/{getline; print; exit}' out.txt || true
+
+      - name: Grep fallback
+        shell: bash
+        run: |
+          echo "---- Fallback (context) ----"
+          grep -nA1 'Like on macOS!' out.txt || true
